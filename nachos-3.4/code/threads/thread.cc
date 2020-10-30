@@ -78,7 +78,6 @@ Thread::Thread(char* threadName,int threadPriority)
 Thread::~Thread()
 {
     DEBUG('t', "Deleting thread \"%s\"\n", name);
-
     ASSERT(this != currentThread);
     DestoryThreadID(this->tid);
     if (stack != NULL)

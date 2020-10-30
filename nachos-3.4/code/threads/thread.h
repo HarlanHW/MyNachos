@@ -101,9 +101,11 @@ class Thread {
 						// overflowed its stack
     void setStatus(ThreadStatus st) { status = st; }
     char* getName() { return (name); }
-    void Print() { printf("%s, ", name); }
-    int getThreadId(){return this->tid;};
-    int getPriority(){return this->priority;};
+    void Print() { printf("%s(%d), ", name,priority); }
+    int getThreadId(){return this->tid;}
+    int getPriority(){return this->priority;}
+    int getStatus(){return this->status;}
+    int getUserId(){return this->uid;}
 
   private:
     // some of the private data for this class is listed above

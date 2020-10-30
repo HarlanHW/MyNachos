@@ -14,7 +14,7 @@
 #include "elevatortest.h"
 
 // testnum is set in main.cc
-int testnum = 2;
+int testnum = 4;
 
 //----------------------------------------------------------------------
 // SimpleThread
@@ -39,12 +39,17 @@ SimpleThread(int which)
 void ShowThreadID(int tid)
 {
     if(tid>=0)
-        printf("thread id is %d, name is \"%s\"\n",currentThread->getThreadId(),currentThread->getName());
+        printf("create successful,thread id is %d, name is \"%s\"\n",currentThread->getThreadId(),currentThread->getName());
     else
     {
             printf("create failed\n");
     }
     
+}
+
+void ShowPriority()
+{
+    scheduler->Print();
 }
 
 //----------------------------------------------------------------------
@@ -71,12 +76,33 @@ void ThreadTest2()
     for(int i=0;i<5;i++)
     {
         char *name=new char[16];
-        sprintf(name,"%s%d\0","forked thread",i);
+        sprintf(name,"%s%d\0","thread",i);
         
         Thread *t = new Thread(name);
         //t->Print();
         //printf(&(t->getName()));
         t->Fork(ShowThreadID, (void*)t->getThreadId());
+    }
+}
+
+void cmd_ts()
+{
+    DEBUG('t', "Entering cmd_ts");
+    Thread *t = new Thread("ts");
+    t->Fork(ShowThreadsStatus, (void*)t->getThreadId());
+}
+
+void ThreadTest4()
+{
+    DEBUG('t', "Entering ThreadTest4");
+    for(int i=1;i<5;i++)
+    {
+        char *name=new char[16];
+        sprintf(name,"%s%d\0","thread",i);
+        
+        Thread *t = new Thread(name,5-i);
+        //Thread *t = new Thread(name);
+        t->Fork(ShowPriority, (void*)t->getThreadId());
     }
 }
 
@@ -93,7 +119,12 @@ ThreadTest()
 	ThreadTest1();
     case 2:
 	ThreadTest2();
+    case 3:
+	cmd_ts();
 	break;
+    case 4:
+    ThreadTest4();
+    break;
     default:
 	printf("No test specified.\n");
 	break;

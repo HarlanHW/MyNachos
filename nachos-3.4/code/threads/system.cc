@@ -173,8 +173,7 @@ Initialize(int argc, char **argv)
 // Cleanup
 // 	Nachos is halting.  De-allocate global data structures.
 //----------------------------------------------------------------------
-void
-Cleanup()
+void Cleanup()
 {
     printf("\nCleaning up...\n");
 #ifdef NETWORK
@@ -201,7 +200,7 @@ Cleanup()
 }
 
 
-int AllocateThreadID(Thread * thread)
+int AllocateThreadID(Thread* thread)
 {
     for(int i=0;i<MaxThreadNum;i++){
         if(ThreadIndex[i]==NULL){
@@ -220,4 +219,16 @@ int GetUserID()
     return 0;
 }
 
+void ShowThreadsStatus()
+{
+    printf("%s\t%s\t%s\n","UID","TID","NAME");
+    for(int i=0;i<MaxThreadNum;i++){
+        if(ThreadIndex[i]){
+            printf("%d\t%d\t%s\n",ThreadIndex[i]->getUserId(),
+                                ThreadIndex[i]->getThreadId(),
+                                ThreadIndex[i]->getName()
+                                );
 
+        }
+    }
+}
