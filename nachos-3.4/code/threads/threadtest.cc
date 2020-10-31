@@ -14,7 +14,7 @@
 #include "elevatortest.h"
 
 // testnum is set in main.cc
-int testnum = 5;
+int testnum = 3;
 
 //----------------------------------------------------------------------
 // SimpleThread
@@ -57,6 +57,7 @@ void TimeSlice()
     for(int i=0;i<20;i++){
         //printf("%d %d %d %d\n",currentThread->getThreadId(),currentThread->getPriority(),stats->totalTicks,currentThread->getCPUtime());
         interrupt->OneTick();
+        //printf("\n");
         ShowThreadsStatus();
         //if(currentThread->getCPUtime()%100==0)
         //    currentThread->Yield();
@@ -96,7 +97,7 @@ void ThreadTest2()
     }
 }
 
-void cmd_ts()
+void ThreadTest3()
 {
     DEBUG('t', "Entering cmd_ts");
     Thread *t = new Thread("ts");
@@ -111,8 +112,8 @@ void ThreadTest4()
         char *name=new char[16];
         sprintf(name,"%s%d\0","thread",i);
         
-        Thread *t = new Thread(name,5-i);
-        //Thread *t = new Thread(name);
+        //Thread *t = new Thread(name,5-i);
+        Thread *t = new Thread(name);
         t->Fork(ShowPriority, (void*)t->getThreadId());
     }
 }
@@ -127,7 +128,7 @@ void ThreadTest5()
     {
         char *name=new char[16];
         sprintf(name,"%s%d\0","thread",i);
-        t = new Thread("ts");
+        t = new Thread(name);
         //Thread *t = new Thread(name,5-i);
         //Thread *t = new Thread(name);
         t->Fork(TimeSlice, (void*)0);
@@ -148,7 +149,7 @@ ThreadTest()
     case 2:
 	ThreadTest2();
     case 3:
-	cmd_ts();
+	ThreadTest3();
 	break;
     case 4:
     ThreadTest4();
