@@ -43,6 +43,7 @@ Thread::Thread(char* threadName)
     stackTop = NULL;
     stack = NULL;
     status = JUST_CREATED;
+    cpu_time=0;
 #ifdef USER_PROGRAM
     space = NULL;
 #endif
@@ -58,6 +59,7 @@ Thread::Thread(char* threadName,int threadPriority)
     stackTop = NULL;
     stack = NULL;
     status = JUST_CREATED;
+    cpu_time=0;
 #ifdef USER_PROGRAM
     space = NULL;
 #endif

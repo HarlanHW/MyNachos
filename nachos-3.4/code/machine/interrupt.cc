@@ -160,6 +160,7 @@ Interrupt::OneTick()
 	stats->totalTicks += UserTick;
 	stats->userTicks += UserTick;
     }
+    currentThread->addCPUtime(SystemTick);
     DEBUG('i', "\n== Tick %d ==\n", stats->totalTicks);
 
 // check any pending interrupts are now ready to fire
@@ -175,6 +176,9 @@ Interrupt::OneTick()
  	status = SystemMode;		// yield is a kernel routine
 	currentThread->Yield();
 	status = old;
+    }
+    if(currentThread->getCPUtime()%TimeSliceTick==0){
+        currentThread->Yield();
     }
 }
 

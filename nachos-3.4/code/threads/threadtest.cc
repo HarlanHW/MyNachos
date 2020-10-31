@@ -14,7 +14,7 @@
 #include "elevatortest.h"
 
 // testnum is set in main.cc
-int testnum = 4;
+int testnum = 5;
 
 //----------------------------------------------------------------------
 // SimpleThread
@@ -52,6 +52,17 @@ void ShowPriority()
     scheduler->Print();
 }
 
+void TimeSlice()
+{
+    for(int i=0;i<20;i++){
+        //printf("%d %d %d %d\n",currentThread->getThreadId(),currentThread->getPriority(),stats->totalTicks,currentThread->getCPUtime());
+        interrupt->OneTick();
+        ShowThreadsStatus();
+        //if(currentThread->getCPUtime()%100==0)
+        //    currentThread->Yield();
+    }
+    
+}
 //----------------------------------------------------------------------
 // ThreadTest1
 // 	Set up a ping-pong between two threads, by forking a thread 
@@ -106,6 +117,23 @@ void ThreadTest4()
     }
 }
 
+void ThreadTest5()
+{
+    DEBUG('t', "Entering ThreadTest4");
+    TimeSlice();
+    Thread *t = new Thread("ts");
+    t->Fork(ShowThreadsStatus, (void*)t->getThreadId());
+    for(int i=1;i<5;i++)
+    {
+        char *name=new char[16];
+        sprintf(name,"%s%d\0","thread",i);
+        t = new Thread("ts");
+        //Thread *t = new Thread(name,5-i);
+        //Thread *t = new Thread(name);
+        t->Fork(TimeSlice, (void*)0);
+    }
+}
+
 //----------------------------------------------------------------------
 // ThreadTest
 // 	Invoke a test routine.
@@ -124,6 +152,9 @@ ThreadTest()
 	break;
     case 4:
     ThreadTest4();
+    break;
+    case 5:
+    ThreadTest5();
     break;
     default:
 	printf("No test specified.\n");

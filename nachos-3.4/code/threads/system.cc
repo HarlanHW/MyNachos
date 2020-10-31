@@ -62,6 +62,7 @@ extern void Cleanup();
 static void
 TimerInterruptHandler(int dummy)
 {
+    //
     if (interrupt->getStatus() != IdleMode)
 	interrupt->YieldOnReturn();
 }
@@ -219,14 +220,17 @@ int GetUserID()
     return 0;
 }
 
+char *StatusName[4]={ "JUST_CREATED", "RUNNING", "READY", "BLOCKED" };
 void ShowThreadsStatus()
 {
-    printf("%s\t%s\t%s\n","UID","TID","NAME");
+    printf("%s\t%s\t%s\t%s\t%s\n","UID","TID","NAME","CPU_TIME","STATUS");
     for(int i=0;i<MaxThreadNum;i++){
         if(ThreadIndex[i]){
-            printf("%d\t%d\t%s\n",ThreadIndex[i]->getUserId(),
+            printf("%d\t%d\t%s\t%d\t%s\n",ThreadIndex[i]->getUserId(),
                                 ThreadIndex[i]->getThreadId(),
-                                ThreadIndex[i]->getName()
+                                ThreadIndex[i]->getName(),
+                                ThreadIndex[i]->getCPUtime(),
+                                StatusName[ThreadIndex[i]->getStatus()]
                                 );
 
         }

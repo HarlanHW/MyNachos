@@ -106,7 +106,9 @@ class Thread {
     int getPriority(){return this->priority;}
     int getStatus(){return this->status;}
     int getUserId(){return this->uid;}
-
+    int getCPUtime(){return this->cpu_time;}
+    void addCPUtime(int time){cpu_time+=time; }
+    void setCPUtime(int time){cpu_time=time; }
   private:
     // some of the private data for this class is listed above
     
@@ -118,6 +120,7 @@ class Thread {
     int tid;
     int uid;
     int priority;
+    int cpu_time;
     void StackAllocate(VoidFunctionPtr func, void *arg);
     					// Allocate a stack for thread.
 					// Used internally by Fork()
