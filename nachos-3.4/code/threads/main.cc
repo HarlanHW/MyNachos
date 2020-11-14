@@ -53,16 +53,26 @@
 #include "utility.h"
 #include "system.h"
 
+//#define THREADS
+//#define USER_PROGRAM
+//#define FILESYS
+
+
 #ifdef THREADS
 extern int testnum;
 #endif
 
+
+//#define USER_PROGRAM
+//#include "../userprog/progtest.cc"
+//#include "../userprog/progtest.cc"
 // External functions used by this file
 
 extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
 extern void Print(char *file), PerformanceTest(void);
 extern void StartProcess(char *file), ConsoleTest(char *in, char *out);
 extern void MailTest(int networkID);
+extern void StartUserThread(char *filename);
 
 //----------------------------------------------------------------------
 // main
@@ -110,16 +120,21 @@ main(int argc, char **argv)
             printf (copyright);
 #ifdef USER_PROGRAM
         if (!strcmp(*argv, "-x")) {        	// run a user program
-	    ASSERT(argc > 1);
-            StartProcess(*(argv + 1));
+	    	ASSERT(argc > 1);
+			int num=atoi(*(argv + 1));
+			for(int i=0;i<num;i++){
+				StartUserThread(*(argv + 2+i));
+			}
+            
             argCount = 2;
-        } else if (!strcmp(*argv, "-c")) {      // test the console
-	    if (argc == 1)
-	        ConsoleTest(NULL, NULL);
-	    else {
-		ASSERT(argc > 2);
-	        ConsoleTest(*(argv + 1), *(argv + 2));
-	        argCount = 3;
+        } 
+		else if (!strcmp(*argv, "-c")) {      // test the console
+	    	if (argc == 1)
+	    	    ConsoleTest(NULL, NULL);
+	    	else {
+			ASSERT(argc > 2);
+	    	    ConsoleTest(*(argv + 1), *(argv + 2));
+	    	    argCount = 3;
 	    }
 	    interrupt->Halt();		// once we start the console, then 
 					// Nachos will loop forever waiting 
@@ -158,7 +173,7 @@ main(int argc, char **argv)
         }
 #endif // NETWORK
     }
-
+	//printf("finish");
     currentThread->Finish();	// NOTE: if the procedure "main" 
 				// returns, then the program "nachos"
 				// will exit (as any other normal program

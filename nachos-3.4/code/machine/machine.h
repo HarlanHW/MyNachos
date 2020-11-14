@@ -10,7 +10,7 @@
 //
 //	In Nachos, user programs are executed one instruction at a time, 
 //	by the simulator.  Each memory reference is translated, checked
-//	for errors, etc.
+//	for errors, etc.ls
 //
 //  DO NOT CHANGE -- part of the machine emulation
 //
@@ -26,13 +26,15 @@
 #include "translate.h"
 #include "disk.h"
 
+#include "bitmap.h"
+
 // Definitions related to the size, and format of user memory
 
 #define PageSize 	SectorSize 	// set the page size equal to
 					// the disk sector size, for
 					// simplicity
 
-#define NumPhysPages    32
+#define NumPhysPages	32
 #define MemorySize 	(NumPhysPages * PageSize)
 #define TLBSize		4		// if there is a TLB, make it small
 
@@ -178,6 +180,14 @@ class Machine {
 
     TranslationEntry *tlb;		// this pointer should be considered 
 					// "read-only" to Nachos kernel code
+	unsigned int TLBMissCount;
+	unsigned int TranslateCount;
+	unsigned int position;
+
+
+	BitMap *memoryMap;
+	//int allocPhyPage();
+	//void freePhyPage();
 
     TranslationEntry *pageTable;
     unsigned int pageTableSize;

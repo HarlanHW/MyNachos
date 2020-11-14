@@ -62,15 +62,20 @@ Machine::Machine(bool debug)
     for (i = 0; i < MemorySize; i++)
       	mainMemory[i] = 0;
 #ifdef USE_TLB
+    //这里设计不合理，应该写入构造函数
     tlb = new TranslationEntry[TLBSize];
-    for (i = 0; i < TLBSize; i++)
-	tlb[i].valid = FALSE;
+    for (i = 0; i < TLBSize; i++){
+        tlb[i].valid = FALSE;
+    }
+	TLBMissCount=0;
+    TranslateCount=0;
+    position=0;
     pageTable = NULL;
 #else	// use linear page table
     tlb = NULL;
     pageTable = NULL;
 #endif
-
+    memoryMap = new BitMap(NumPhysPages);
     singleStep = debug;
     CheckEndian();
 }
@@ -206,9 +211,14 @@ int Machine::ReadRegister(int num)
     }
 
 void Machine::WriteRegister(int num, int value)
-    {
+{
 	ASSERT((num >= 0) && (num < NumTotalRegs));
 	// DEBUG('m', "WriteRegister %d, value %d\n", num, value);
 	registers[num] = value;
-    }
+}
 
+/* 
+int Machine::allocPhyPage(){
+    return bitmap.Find();
+}
+*/

@@ -55,8 +55,7 @@ extern PostOffice* postOffice;
 
 #endif // SYSTEM_H
 
-int AllocateThreadID(Thread * thread);
-void DestoryThreadID(int tid);
-int GetUserID();
-
+extern int AllocateThreadID(Thread * thread);
+extern void DestoryThreadID(int tid);
+extern int GetUserID();
 extern void ShowThreadsStatus();

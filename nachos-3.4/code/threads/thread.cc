@@ -205,6 +205,10 @@ Thread::Yield ()
     
     nextThread = scheduler->FindNextToRun();
     if (nextThread != NULL) {
+        #ifdef USER_PROGRAM
+        currentThread->SaveUserState();
+        #endif
+
 	scheduler->ReadyToRun(this);
 	scheduler->Run(nextThread);
     }
@@ -321,7 +325,7 @@ void
 Thread::SaveUserState()
 {
     for (int i = 0; i < NumTotalRegs; i++)
-	userRegisters[i] = machine->ReadRegister(i);
+	    userRegisters[i] = machine->ReadRegister(i);
 }
 
 //----------------------------------------------------------------------
