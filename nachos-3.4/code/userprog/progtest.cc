@@ -8,6 +8,7 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+
 #include "copyright.h"
 #include "system.h"
 #include "console.h"
@@ -20,9 +21,9 @@
 //	memory, and jump to it.
 //----------------------------------------------------------------------
 
-void
-StartProcess(char *filename)
+void StartProcess(char *filename)
 {
+    //put the process file to memory and allocate space
     OpenFile *executable = fileSystem->Open(filename);
     AddrSpace *space;
 
@@ -65,8 +66,7 @@ static void WriteDone(int arg) { writeDone->V(); }
 //	the output.  Stop when the user types a 'q'.
 //----------------------------------------------------------------------
 
-void 
-ConsoleTest (char *in, char *out)
+void ConsoleTest (char *in, char *out)
 {
     char ch;
 
@@ -81,4 +81,28 @@ ConsoleTest (char *in, char *out)
 	writeDone->P() ;        // wait for write to finish
 	if (ch == 'q') return;  // if q, quit
     }
+}
+
+void UserThread(char *filename){
+    
+    printf("Running user program thread %s %d\n",filename,currentThread->getThreadId());   
+    currentThread->space->InitRegisters();
+    currentThread->space->RestoreState();    
+    machine->Run();
+    ASSERT(FALSE); 		
+}
+
+void StartUserThread(char *filename){
+    OpenFile *executable = fileSystem->Open(filename);
+    if (executable == NULL) {
+	    printf("Unable to open file %s\n", filename);
+	    return;
+    }
+    Thread *thread= new Thread(filename);
+    //AddrSpace *space;
+    thread->space=new AddrSpace(executable);
+    thread->Fork(UserThread,(char*)filename);
+    
+    
+
 }
