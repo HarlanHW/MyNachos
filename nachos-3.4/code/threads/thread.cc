@@ -210,6 +210,7 @@ Thread::Yield ()
         #endif
 
 	scheduler->ReadyToRun(this);
+    
 	scheduler->Run(nextThread);
     }
     (void) interrupt->SetLevel(oldLevel);

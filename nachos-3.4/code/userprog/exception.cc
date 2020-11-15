@@ -101,24 +101,70 @@ void TLBAlgoClock(int virtAddr)
     machine->tlb[machine->position].use = TRUE;
     machine->tlb[machine->position].valid=TRUE;
 }
-
-
-//tlb失效时候，将页表当中的数据计入tlb
-void TLBMissHandler(int virtAddr)//快表失效处理函数
+int NaivePageReplacement(int vpn)
 {
-    int position = 0;
+    int pageFrame = -1;
+    for (int temp_vpn = 0; temp_vpn < machine->pageTableSize, temp_vpn != vpn; temp_vpn++) {
+        if (machine->pageTable[temp_vpn].valid) {
+            if (!machine->pageTable[temp_vpn].dirty) {
+                pageFrame = machine->pageTable[temp_vpn].physicalPage;
+                break;
+            }
+        }
+    }
+    if (pageFrame == -1) { 
+        for (int replaced_vpn = 0; replaced_vpn < machine->pageTableSize, replaced_vpn != vpn; replaced_vpn++) {
+            if (machine->pageTable[replaced_vpn].valid) {
+                machine->pageTable[replaced_vpn].valid = FALSE;
+                pageFrame = machine->pageTable[replaced_vpn].physicalPage;
+                //将页表写回磁盘
+                OpenFile *vm = fileSystem->Open("VirtualMemory");
+                vm->WriteAt(&(machine->mainMemory[pageFrame*PageSize]), PageSize, replaced_vpn*PageSize);
+                delete vm;
+                break;
+            }
+        }
+    }
+    return pageFrame;
+}
+
+
+TranslationEntry PageFaultHandler(int vpn)
+{
+
+    int pageFrame = machine->memoryMap->Find(); 
+    if (pageFrame == -1) {
+        pageFrame = NaivePageReplacement(vpn);
+    }
+    machine->pageTable[vpn].physicalPage = pageFrame;
+    OpenFile *vm = fileSystem->Open("VirtualMemory"); 
+    vm->ReadAt(&(machine->mainMemory[pageFrame*PageSize]), PageSize, vpn*PageSize);
+    delete vm; 
+    machine->pageTable[vpn].valid = TRUE;
+    machine->pageTable[vpn].use = FALSE;
+    machine->pageTable[vpn].dirty = FALSE;
+    machine->pageTable[vpn].readOnly = FALSE;
+    printf("%s %d\n",currentThread->getName(),currentThread->getThreadId());
+    currentThread->space->Print(); //打印地址空间信息
+    machine->memoryMap->Print();
+}
+
+
+void TLBMissHandler(int virtAddr)//处理页表失效
+{
     unsigned int vpn;
     vpn = (unsigned) virtAddr / PageSize;
 
-    //machine->tlb[position]
-
-    machine->tlb[position] = machine->pageTable[vpn];
-  //下面的Exercise3才实现了具体快表置换算法，这里为了简化测试，只使用了2个size的TLB
-    if(position==0) 
-    	position = 1;
-    else 
-    	position = 0;
+    TranslationEntry page = machine->pageTable[vpn];
+    if (!page.valid) { 
+        DEBUG('m',"\t=> Page miss\n");
+        page = PageFaultHandler(vpn);
+    }
+    TLBAlgoClock(virtAddr);//处理快表失效
 }
+
+
+
 
 
 void ExceptionHandler(ExceptionType which)
@@ -133,33 +179,14 @@ void ExceptionHandler(ExceptionType which)
         else if(type==SC_Exit){
             if(currentThread->space!=NULL){
                 DEBUG('a', "user program exit\n");
-                for(int i=0;i<machine->pageTableSize;i++){
-                    int n=machine->pageTable[i].physicalPage;
-                    if(machine->memoryMap->Test(n)){
-                        DEBUG('a', "free Page %d\n",n);
-                        machine->memoryMap->Clear(n);
-                    }                        
-                }
-
-                /* for(int i=0;i<currentThread->space->numPages;i++){
-                    int n=currentThread->space->pageTable[i].physicalPage;
-                    if(machine->memoryMap->Test(n)){
-                        DEBUG('a', "free Page %d\n",n);
-                        machine->memoryMap->Clear(n);
-                    }                        
-                }
-                */
                 delete currentThread->space;//这里会执行space的析构函数，释放位示图                
                 currentThread->space = NULL;
                 currentThread->Finish();
                 //int nextPC=machine->ReadRegister(NextPCReg);
                 //machine->WriteRegister(PCReg,nextPC);
                 //interrupt->Halt();
-            }
-
-            
-        }
-	
+            }         
+        }	
     }
 
     else if(which == PageFaultException){
@@ -172,13 +199,12 @@ void ExceptionHandler(ExceptionType which)
             DEBUG('m',"=====>TLB miss,TranslateCount=%d,MissCount=%d\n",
             machine->TranslateCount,machine->TLBMissCount);
             int BadVAddr=machine->ReadRegister(BadVAddrReg);
-            //TLBMissHandler(BadVAddr);//TLB MISS测试
+            TLBMissHandler(BadVAddr);//TLB MISS测试
             //TLBAlgoFIFO(BadVAddr);//FIFO算法测试
-            TLBAlgoClock(BadVAddr);//CLOCK时钟算法测试
+            //TLBAlgoClock(BadVAddr);//CLOCK时钟算法测试
         }
         return;
     }
-
     else {
 	printf("Unexpected user mode exception %d %d\n", which, type);
 	ASSERT(FALSE);

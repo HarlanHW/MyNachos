@@ -59,7 +59,7 @@ SwapHeader (NoffHeader *noffH)
 //
 //	"executable" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
-
+/* 
 AddrSpace::AddrSpace(OpenFile *executable)
 {
     NoffHeader noffH;
@@ -100,11 +100,9 @@ AddrSpace::AddrSpace(OpenFile *executable)
     
     //pageTable[i].phyaicalPage=machine->allocPhyPage();
     }
-    
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
     bzero(machine->mainMemory, size);
-
 // then, copy in the code and data segments into memory
     if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
@@ -118,7 +116,61 @@ AddrSpace::AddrSpace(OpenFile *executable)
         executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
 			noffH.initData.size, noffH.initData.inFileAddr);
     }
+}
+*/
 
+AddrSpace::AddrSpace(OpenFile *executable)
+{
+    NoffHeader noffH;
+    unsigned int i, size;
+    executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
+    if ((noffH.noffMagic != NOFFMAGIC) && 
+        (WordToHost(noffH.noffMagic) == NOFFMAGIC))
+        SwapHeader(&noffH);
+    ASSERT(noffH.noffMagic == NOFFMAGIC);
+    size = noffH.code.size + noffH.initData.size + noffH.uninitData.size + UserStackSize;   
+    numPages = divRoundUp(size, PageSize);
+    size = numPages * PageSize;
+		//上面的内容与原来的一样
+  //用fileSystem创建VirtualMemory文件，运行nachos之后，会在在usrprog目录下面生成该文件
+    bool success_create_vm = fileSystem->Create("VirtualMemory", size);
+    ASSERT(numPages <= NumPhysPages);       // check we're not trying
+    pageTable = new TranslationEntry[numPages];
+    for (i = 0; i < numPages; i++) {
+    pageTable[i].virtualPage = i;  
+    pageTable[i].physicalPage = 0;//因为我们没有将用户程序内容装载进内存，所以physicalPage的值可以都设置为0
+    pageTable[i].valid = FALSE;//表示没有从磁盘装载任何页面进内存
+    pageTable[i].use = FALSE;
+    pageTable[i].dirty = FALSE;
+    pageTable[i].readOnly = FALSE;  
+    }
+		//初始化整个物理内存
+    //bzero(machine->mainMemory, MemorySize);
+  
+    OpenFile *vm = fileSystem->Open("VirtualMemory");
+
+    char *virtualMemory_temp;
+    virtualMemory_temp = new char[size];//该数组主要是用于将用户程序的内容写入磁盘的中间过渡
+    for (i = 0; i < size; i++)
+        virtualMemory_temp[i] = 0;
+    if (noffH.code.size > 0) {
+        DEBUG('a', "\tCopying code segment, at 0x%x, size %d\n",
+              noffH.code.virtualAddr, noffH.code.size);
+        executable->ReadAt(&(virtualMemory_temp[noffH.code.virtualAddr]),
+                           noffH.code.size, noffH.code.inFileAddr);
+        vm->WriteAt(&(virtualMemory_temp[noffH.code.virtualAddr]),
+                    noffH.code.size, noffH.code.virtualAddr*PageSize);
+    }
+    if (noffH.initData.size > 0) {
+        DEBUG('a', "\tCopying data segment, at 0x%x, size %d\n",
+              noffH.initData.virtualAddr, noffH.initData.size);
+        executable->ReadAt(&(virtualMemory_temp[noffH.initData.virtualAddr]),
+                           noffH.initData.size, noffH.initData.inFileAddr);
+        vm->WriteAt(&(virtualMemory_temp[noffH.initData.virtualAddr]),
+                    noffH.initData.size, noffH.initData.virtualAddr*PageSize);
+    }
+
+    delete vm; 
 }
 
 //----------------------------------------------------------------------
@@ -128,9 +180,21 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
 AddrSpace::~AddrSpace()
 {
+    //将当前线程占用的空间释放掉
     for (int i = 0; i < numPages; i++) {
-        machine->memoryMap->Clear(machine->pageTable[i].physicalPage);
+        int n=pageTable[i].physicalPage;
+        DEBUG('a', "free Page %d\n",n);
+        machine->memoryMap->Clear(n);
     }
+/* 
+                    for(int i=0;i<machine->pageTableSize;i++){
+                    int n=machine->pageTable[i].physicalPage;
+                    if(machine->memoryMap->Test(n)){
+                        DEBUG('a', "free Page %d\n",n);
+                        machine->memoryMap->Clear(n);
+                    }                        
+                }
+                */
     delete pageTable;
 }
 
@@ -195,3 +259,35 @@ void AddrSpace::RestoreState()
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
 }
+
+
+void AddrSpace::Print()
+{
+    int i=0;
+    printf("=====Memory=====\n");
+    printf("VPN\tPPN\tvalid\trdonly\tuse\tdirty\n");
+    for(i=0;i<numPages;i++){
+        int valid=pageTable[i].valid?1:0;
+        int readOnly=pageTable[i].readOnly?1:0;
+        int use=pageTable[i].use?1:0;
+        int dirty=pageTable[i].dirty?1:0;
+
+        printf("%d\t%d\t%d\t%d\t%d\t%d\n",
+            pageTable[i].virtualPage,
+            pageTable[i].physicalPage,
+            valid,readOnly,use,dirty);
+            
+            
+            
+    }
+}
+/*int virtualPage;  	// The page number in virtual memory.
+    int physicalPage;  	// The page number in real memory (relative to the
+			//  start of "mainMemory"
+    bool valid;         // If this bit is set, the translation is ignored.
+			// (In other words, the entry hasn't been initialized.)
+    bool readOnly;	// If this bit is set, the user program is not allowed
+			// to modify the contents of the page.
+    bool use;           // This bit is set by the hardware every time the
+			// page is referenced or modified.
+    bool dirty;    */
