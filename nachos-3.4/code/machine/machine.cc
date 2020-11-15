@@ -70,7 +70,18 @@ Machine::Machine(bool debug)
 	TLBMissCount=0;
     TranslateCount=0;
     position=0;
+    
     pageTable = NULL;
+    /* pageTable = new TranslationEntry[NumPhysPages];
+    //初始化倒排页表
+    for (i = 0; i < NumPhysPages; i++) {
+        pageTable[i].physicalPage = i;
+        pageTable[i].virtualPage = i;
+        pageTable[i].valid = FALSE;
+        pageTable[i].dirty = FALSE;
+        pageTable[i].readOnly = FALSE;
+        pageTable[i].threadId = -1;*/
+    }
 #else	// use linear page table
     tlb = NULL;
     pageTable = NULL;
