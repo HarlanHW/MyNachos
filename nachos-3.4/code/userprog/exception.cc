@@ -135,15 +135,25 @@ void ExceptionHandler(ExceptionType which)
                 DEBUG('a', "user program exit\n");
                 for(int i=0;i<machine->pageTableSize;i++){
                     int n=machine->pageTable[i].physicalPage;
-                    if(machine->memoryMap->Test(n))
+                    if(machine->memoryMap->Test(n)){
+                        DEBUG('a', "free Page %d\n",n);
                         machine->memoryMap->Clear(n);
+                    }                        
                 }
-                delete currentThread->space;//这里会执行space的析构函数，释放位示图
-                
+
+                /* for(int i=0;i<currentThread->space->numPages;i++){
+                    int n=currentThread->space->pageTable[i].physicalPage;
+                    if(machine->memoryMap->Test(n)){
+                        DEBUG('a', "free Page %d\n",n);
+                        machine->memoryMap->Clear(n);
+                    }                        
+                }
+                */
+                delete currentThread->space;//这里会执行space的析构函数，释放位示图                
                 currentThread->space = NULL;
                 currentThread->Finish();
-                int nextPC=machine->ReadRegister(NextPCReg);
-                machine->WriteRegister(PCReg,nextPC);
+                //int nextPC=machine->ReadRegister(NextPCReg);
+                //machine->WriteRegister(PCReg,nextPC);
                 //interrupt->Halt();
             }
 
